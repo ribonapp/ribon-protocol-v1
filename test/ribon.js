@@ -4,9 +4,16 @@ const Ribon = artifacts.require("Ribon");
 const RibonGov = artifacts.require("RibonGov");
 
 contract("Ribon", accounts => {
+  let ribonGov;
+  let ribon;
+
+  before(async function () {
+    ribonGov = await RibonGov.deployed();
+    ribon = await Ribon.deployed();
+  })
+
   it("should have Ribon name", async () => {
-    const instance = await Ribon.deployed()
-    const name = await instance.name();
+    const name = await ribon.name();
     assert.equal(
         name,
         "Ribon",
@@ -14,10 +21,11 @@ contract("Ribon", accounts => {
       )
   });
 
+
+
   describe("#balance", () => {
-    it("should return 0", async () => {
-      const instance = await Ribon.deployed()
-      const balance = await instance.balance();
+    it("should return 0 when has no tokens", async () => {
+      const balance = await ribon.balance();
       assert.equal(
           web3.utils.fromWei(balance.toString()),
           0,
@@ -26,23 +34,31 @@ contract("Ribon", accounts => {
     });
   });
 
-  describe("#stakeGovernanceToken", async () => {
-    it("should stake governance tokens", async () => {
-      const accounts = await new web3.eth.getAccounts()
-      const ribonGov = await RibonGov.deployed();
-      const ribon = await Ribon.deployed()
+  describe("#stakeGovernanceToken when stake correctly ", async () => {
+    let balance;
+    const amount = web3.utils.toWei("100", "ether");
+    
+    before('setup contract for each test', async function () {
+      await ribonGov.approve(ribon.address, amount)
+      await ribon.stakeGovernanceTokens(amount)
+      balance = await ribon.balance();
+    });
 
-      await ribonGov.approve(ribon.address, web3.utils.toWei("100", "ether"))
-
-      await ribon.stakeGovernanceTokens(web3.utils.toWei("100", "ether"))
-      
-
-      const balance = await ribon.balance();
+    it("should add the amount on balance", async () => {
       assert.equal(
-          balance.toString(),
-          web3.utils.toWei("100", "ether"),
+        balance.toString(),
+        web3.utils.toWei("100", "ether"),
+        "Balance wasn't 100 ether"
+      );
+    });
+      
+    it("should add the amount on total staked", async () => {
+      const totalStaked = await ribon.totalStaked();
+      assert.equal(
+          totalStaked.toString(),
+          amount,
           "Balance wasn't 100 ether"
         )
     });
-  })
+  });
 });

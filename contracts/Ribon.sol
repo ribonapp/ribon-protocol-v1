@@ -11,6 +11,8 @@ contract Ribon is ERC20 {
 
     IERC20 public governanceToken;
 
+    uint256 public totalStaked;
+
     constructor(address _governanceToken) ERC20("Ribon", "RBN") {
         governanceToken = IERC20(_governanceToken);
     }
@@ -21,5 +23,11 @@ contract Ribon is ERC20 {
 
     function stakeGovernanceTokens(uint256 _amount) public {
         governanceToken.safeTransferFrom(msg.sender, address(this), _amount);
+
+        totalStaked = totalStaked + _amount;
+    }
+
+    function getTotalStaked() public view returns (uint256) {
+        return totalStaked;
     }
 }
