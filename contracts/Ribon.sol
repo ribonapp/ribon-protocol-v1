@@ -11,23 +11,63 @@ contract Ribon is ERC20 {
 
     IERC20 public governanceToken;
 
-    uint256 public totalStaked;
+    address[] public integrationStakers;
+    uint256 public totalStakedByIntegrations;
+
+    mapping(address => bool) public integrationIsStaking;
+    mapping(address => uint256) public integrationStakingBalance;
 
     constructor(address _governanceToken) ERC20("Ribon", "RBN") {
         governanceToken = IERC20(_governanceToken);
     }
 
-    function balance() public view returns (uint256) {
-        return governanceToken.balanceOf(address(this));
+    function getTotalStakedByIntegrations() public view returns (uint256) {
+        return totalStakedByIntegrations;
     }
 
-    function stakeGovernanceTokens(uint256 _amount) public {
+    function getIntegrationStakingBalance(address _integrationAddress)
+        public
+        view
+        returns (uint256)
+    {
+        return integrationStakingBalance[_integrationAddress];
+    }
+
+    function getIntegrationIsStaking(address _integrationAddress)
+        public
+        view
+        returns (bool)
+    {
+        return integrationIsStaking[_integrationAddress];
+    }
+
+    function stakeGovernanceTokensAsIntegration(uint256 _amount) public {
         governanceToken.safeTransferFrom(msg.sender, address(this), _amount);
 
-        totalStaked = totalStaked + _amount;
+        totalStakedByIntegrations = totalStakedByIntegrations + _amount;
+
+        integrationStakingBalance[msg.sender] =
+            integrationStakingBalance[msg.sender] +
+            _amount;
+
+        if (!integrationIsStaking[msg.sender]) {
+            integrationStakers.push(msg.sender);
+        }
+
+        integrationIsStaking[msg.sender] = true;
     }
 
-    function getTotalStaked() public view returns (uint256) {
-        return totalStaked;
+    function unstakeGovernanceTokensAsIntegration(uint256 _amount) public {
+        governanceToken.safeTransfer(msg.sender, _amount);
+
+        integrationStakingBalance[msg.sender] =
+            integrationStakingBalance[msg.sender] -
+            _amount;
+
+        totalStakedByIntegrations = totalStakedByIntegrations - _amount;
+
+        if (integrationStakingBalance[msg.sender] == 0) {
+            integrationIsStaking[msg.sender] = false;
+        }
     }
 }

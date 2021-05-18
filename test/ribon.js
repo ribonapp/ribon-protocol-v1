@@ -1,5 +1,3 @@
-const console = require("console");
-
 const Ribon = artifacts.require("Ribon");
 const RibonGov = artifacts.require("RibonGov");
 
@@ -10,6 +8,7 @@ contract("Ribon", accounts => {
   before(async function () {
     ribonGov = await RibonGov.deployed();
     ribon = await Ribon.deployed();
+    console.log("accounts: " + accounts[0]);
   })
 
   it("should have Ribon name", async () => {
@@ -21,43 +20,84 @@ contract("Ribon", accounts => {
       )
   });
 
-
-
-  describe("#balance", () => {
-    it("should return 0 when has no tokens", async () => {
-      const balance = await ribon.balance();
+  describe("#getTotalStakedByIntegrations", async () => {      
+    it("should return total staked by integrations", async () => {
+      const totalStakedByIntegrations = await ribon.getTotalStakedByIntegrations();
       assert.equal(
-          web3.utils.fromWei(balance.toString()),
+          totalStakedByIntegrations.toString(),
           0,
-          "Balance wasn't 0"
+          "Total staked should be 0"
         )
     });
   });
 
-  describe("#stakeGovernanceToken when stake correctly ", async () => {
-    let balance;
-    const amount = web3.utils.toWei("100", "ether");
+  describe("#stakeGovernanceTokensAsIntegration when stake correctly ", async () => {
+    const amount = web3.utils.toWei("10", "ether");
     
-    before('setup contract for each test', async function () {
+    before(async function () {
       await ribonGov.approve(ribon.address, amount)
-      await ribon.stakeGovernanceTokens(amount)
-      balance = await ribon.balance();
-    });
-
-    it("should add the amount on balance", async () => {
-      assert.equal(
-        balance.toString(),
-        web3.utils.toWei("100", "ether"),
-        "Balance wasn't 100 ether"
-      );
+      await ribon.stakeGovernanceTokensAsIntegration(amount)
     });
       
-    it("should add the amount on total staked", async () => {
-      const totalStaked = await ribon.totalStaked();
+    it("should add the amount on total staked by integrations", async () => {
+      const totalStaked = await ribon.getTotalStakedByIntegrations();
       assert.equal(
           totalStaked.toString(),
           amount,
-          "Balance wasn't 100 ether"
+          "Balance wasn't 10 ether"
+        )
+    });
+
+    it("should add the amount on integration staking balance", async () => {
+      const totalStaked = await ribon.getIntegrationStakingBalance(accounts[0]);
+      assert.equal(
+          totalStaked.toString(),
+          amount,
+          "Balance wasn't 10 ether"
+        )
+    });
+
+    it("should change integraitonIsStaking to true", async () => {
+      const integrationIsStaking = await ribon.getIntegrationIsStaking(accounts[0]);
+      assert.equal(
+          integrationIsStaking,
+          true,
+          "integrationIsStaking wasn't true"
+        )
+    });
+  });
+
+  describe("#unstakeGovernanceTokensAsIntegration when unstake correctly ", async () => {
+    const amount = web3.utils.toWei("10", "ether");
+    
+    before(async function () {
+      await ribon.unstakeGovernanceTokensAsIntegration(amount)
+    });
+      
+    it("should remove the amount on total staked by integrations", async () => {
+      const totalStaked = await ribon.getTotalStakedByIntegrations();
+      assert.equal(
+          totalStaked.toString(),
+          0,
+          "Balance wasn't 0 ether"
+        )
+    });
+
+    it("should add the amount on integration staking balance", async () => {
+      const totalStaked = await ribon.getIntegrationStakingBalance(accounts[0]);
+      assert.equal(
+          totalStaked.toString(),
+          0,
+          "Balance wasn't 0 ether"
+        )
+    });
+
+    it("should change integraitonIsStaking to false", async () => {
+      const integrationIsStaking = await ribon.getIntegrationIsStaking(accounts[0]);
+      assert.equal(
+          integrationIsStaking,
+          false,
+          "integrationIsStaking wasn't false"
         )
     });
   });
