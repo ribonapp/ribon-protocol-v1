@@ -1,3 +1,5 @@
+const console = require("console");
+
 const Ribon = artifacts.require("Ribon");
 const RibonGov = artifacts.require("RibonGov");
 
@@ -65,6 +67,15 @@ contract("Ribon", accounts => {
           "integrationIsStaking wasn't true"
         )
     });
+
+    it("should change integraitonHasStaked to true", async () => {
+      const integrationHasStaked = await ribon.getIntegrationHasStaked(accounts[0]);
+      assert.equal(
+          integrationHasStaked,
+          true,
+          "integrationIsStaking wasn't true"
+        )
+    });
   });
 
   describe("#unstakeGovernanceTokensAsIntegration when unstake correctly ", async () => {
@@ -98,6 +109,38 @@ contract("Ribon", accounts => {
           integrationIsStaking,
           false,
           "integrationIsStaking wasn't false"
+        )
+    });
+  });
+
+  describe("#deposit when deposit correctly ", async () => {
+    const amount = web3.utils.toWei("1", "ether");
+    let test;
+    let test2;
+    
+    before(async function () {
+      test = await ribon.getIntegrationStakers();
+      test2 = await ribon.getIntegrationIsStaking(accounts[0]);
+      await ribonGov.approve(ribon.address, amount)
+      await ribon.stakeGovernanceTokensAsIntegration(amount)
+      await ribonGov.approve(ribon.address, amount);
+      await ribon.deposit(amount);
+    });
+
+    it("should distribute proportionally to integrations", async () => {
+      console.log("test :" + test);
+      console.log("test2 :" + test2);
+      const integrationStakers= await ribon.getIntegrationStakers();
+      const integrationStakingBalance = await ribon.getIntegrationStakingBalance(accounts[0]);
+      const totalStaked = await ribon.getTotalStakedByIntegrations();
+      console.log("address: " + integrationStakers);
+      console.log("integration: " + integrationStakingBalance);
+      console.log("total: " + totalStaked);
+      const balance = await ribon.balanceOf(accounts[0]);
+      assert.equal(
+          balance.toString(),
+          amount,
+          "Balance wasn't 1 ether"
         )
     });
   });

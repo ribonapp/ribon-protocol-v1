@@ -15,10 +15,15 @@ contract Ribon is ERC20 {
     uint256 public totalStakedByIntegrations;
 
     mapping(address => bool) public integrationIsStaking;
+    mapping(address => bool) public integrationHasStaked;
     mapping(address => uint256) public integrationStakingBalance;
 
     constructor(address _governanceToken) ERC20("Ribon", "RBN") {
         governanceToken = IERC20(_governanceToken);
+    }
+
+    function getIntegrationStakers() public view returns (address[] memory) {
+        return integrationStakers;
     }
 
     function getTotalStakedByIntegrations() public view returns (uint256) {
@@ -41,6 +46,14 @@ contract Ribon is ERC20 {
         return integrationIsStaking[_integrationAddress];
     }
 
+    function getIntegrationHasStaked(address _integrationAddress)
+        public
+        view
+        returns (bool)
+    {
+        return integrationHasStaked[_integrationAddress];
+    }
+
     function stakeGovernanceTokensAsIntegration(uint256 _amount) public {
         governanceToken.safeTransferFrom(msg.sender, address(this), _amount);
 
@@ -50,11 +63,11 @@ contract Ribon is ERC20 {
             integrationStakingBalance[msg.sender] +
             _amount;
 
-        if (!integrationIsStaking[msg.sender]) {
+        if (!integrationHasStaked[msg.sender]) {
+            integrationHasStaked[msg.sender] = true;
+            integrationIsStaking[msg.sender] = true;
             integrationStakers.push(msg.sender);
         }
-
-        integrationIsStaking[msg.sender] = true;
     }
 
     function unstakeGovernanceTokensAsIntegration(uint256 _amount) public {
@@ -68,6 +81,22 @@ contract Ribon is ERC20 {
 
         if (integrationStakingBalance[msg.sender] == 0) {
             integrationIsStaking[msg.sender] = false;
+        }
+    }
+
+    function deposit(uint256 _amount) public {
+        governanceToken.safeTransferFrom(msg.sender, address(this), _amount);
+
+        for (uint256 i = 0; i < integrationStakers.length; i++) {
+            address recipient = integrationStakers[i];
+            if (integrationStakingBalance[recipient] > 0) {
+                uint256 percentage =
+                    integrationStakingBalance[recipient] /
+                        totalStakedByIntegrations;
+                uint256 numberOfTokens = _amount * percentage;
+
+                _mint(recipient, numberOfTokens);
+            }
         }
     }
 }
