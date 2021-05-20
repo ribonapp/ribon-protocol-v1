@@ -16,7 +16,11 @@ contract Ribon is ERC20 {
 
     mapping(address => bool) public integrationIsStaking;
     mapping(address => bool) public integrationHasStaked;
+
     mapping(address => uint256) public integrationStakingBalance;
+
+    mapping(address => uint256) public integrationBalance;
+    mapping(address => uint256) public userBalance;
 
     constructor(address _governanceToken) ERC20("Ribon", "RBN") {
         governanceToken = IERC20(_governanceToken);
@@ -38,6 +42,14 @@ contract Ribon is ERC20 {
         return integrationStakingBalance[_integrationAddress];
     }
 
+    function getIntegrationBalance(address _integrationAddress)
+        public
+        view
+        returns (uint256)
+    {
+        return integrationBalance[_integrationAddress];
+    }
+
     function getIntegrationIsStaking(address _integrationAddress)
         public
         view
@@ -52,6 +64,14 @@ contract Ribon is ERC20 {
         returns (bool)
     {
         return integrationHasStaked[_integrationAddress];
+    }
+
+    function getUserBalance(address _userAddress)
+        public
+        view
+        returns (uint256)
+    {
+        return userBalance[_userAddress];
     }
 
     function stakeGovernanceTokensAsIntegration(uint256 _amount) public {
@@ -95,8 +115,17 @@ contract Ribon is ERC20 {
                         totalStakedByIntegrations;
                 uint256 numberOfTokens = _amount * percentage;
 
-                _mint(recipient, numberOfTokens);
+                integrationBalance[recipient] =
+                    integrationBalance[recipient] +
+                    numberOfTokens;
             }
         }
+    }
+
+    function distribute(address _user, uint256 _amount) public {
+        integrationBalance[msg.sender] =
+            integrationBalance[msg.sender] -
+            _amount;
+        userBalance[_user] = userBalance[_user] + _amount;
     }
 }

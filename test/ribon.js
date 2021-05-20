@@ -115,12 +115,8 @@ contract("Ribon", accounts => {
 
   describe("#deposit when deposit correctly ", async () => {
     const amount = web3.utils.toWei("1", "ether");
-    let test;
-    let test2;
     
     before(async function () {
-      test = await ribon.getIntegrationStakers();
-      test2 = await ribon.getIntegrationIsStaking(accounts[0]);
       await ribonGov.approve(ribon.address, amount)
       await ribon.stakeGovernanceTokensAsIntegration(amount)
       await ribonGov.approve(ribon.address, amount);
@@ -128,15 +124,33 @@ contract("Ribon", accounts => {
     });
 
     it("should distribute proportionally to integrations", async () => {
-      console.log("test :" + test);
-      console.log("test2 :" + test2);
-      const integrationStakers= await ribon.getIntegrationStakers();
-      const integrationStakingBalance = await ribon.getIntegrationStakingBalance(accounts[0]);
-      const totalStaked = await ribon.getTotalStakedByIntegrations();
-      console.log("address: " + integrationStakers);
-      console.log("integration: " + integrationStakingBalance);
-      console.log("total: " + totalStaked);
-      const balance = await ribon.balanceOf(accounts[0]);
+      const balance = await ribon.getIntegrationBalance(accounts[0]);
+      assert.equal(
+          balance.toString(),
+          amount,
+          "Balance wasn't 1 ether"
+        )
+    });
+  });
+
+  describe("#distribute when distribute correctly ", async () => {
+    const amount = web3.utils.toWei("1", "ether");
+    
+    before(async function () {
+      await ribon.distribute(accounts[1], amount)
+    });
+
+    it("should remove amount to integration balance", async () => {
+      const balance = await ribon.getIntegrationBalance(accounts[0]);
+      assert.equal(
+          balance.toString(),
+          0,
+          "Balance wasn't 0 ether"
+        )
+    });
+
+    it("should add amount to user balance", async () => {
+      const balance = await ribon.getUserBalance(accounts[1]);
       assert.equal(
           balance.toString(),
           amount,
