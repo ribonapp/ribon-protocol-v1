@@ -115,17 +115,13 @@ contract Ribon is ERC20 {
                         totalStakedByIntegrations;
                 uint256 numberOfTokens = _amount * percentage;
 
-                integrationBalance[recipient] =
-                    integrationBalance[recipient] +
-                    numberOfTokens;
+                _mint(recipient, numberOfTokens);
             }
         }
     }
 
-    function distribute(address _user, uint256 _amount) public {
-        integrationBalance[msg.sender] =
-            integrationBalance[msg.sender] -
-            _amount;
-        userBalance[_user] = userBalance[_user] + _amount;
+    function donate(address _ngo, uint256 _amount) public {
+        _burn(msg.sender, _amount);
+        governanceToken.safeTransfer(_ngo, _amount);
     }
 }

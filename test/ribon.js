@@ -34,7 +34,7 @@ contract("Ribon", accounts => {
   });
 
   describe("#stakeGovernanceTokensAsIntegration when stake correctly ", async () => {
-    const amount = web3.utils.toWei("10", "ether");
+    const amount = web3.utils.toWei("1", "ether");
     
     before(async function () {
       await ribonGov.approve(ribon.address, amount)
@@ -46,7 +46,7 @@ contract("Ribon", accounts => {
       assert.equal(
           totalStaked.toString(),
           amount,
-          "Balance wasn't 10 ether"
+          "Balance wasn't 1 ether"
         )
     });
 
@@ -55,7 +55,7 @@ contract("Ribon", accounts => {
       assert.equal(
           totalStaked.toString(),
           amount,
-          "Balance wasn't 10 ether"
+          "Balance wasn't 1 ether"
         )
     });
 
@@ -79,7 +79,7 @@ contract("Ribon", accounts => {
   });
 
   describe("#unstakeGovernanceTokensAsIntegration when unstake correctly ", async () => {
-    const amount = web3.utils.toWei("10", "ether");
+    const amount = web3.utils.toWei("1", "ether");
     
     before(async function () {
       await ribon.unstakeGovernanceTokensAsIntegration(amount)
@@ -124,7 +124,7 @@ contract("Ribon", accounts => {
     });
 
     it("should distribute proportionally to integrations", async () => {
-      const balance = await ribon.getIntegrationBalance(accounts[0]);
+      const balance = await ribon.balanceOf(accounts[0]);
       assert.equal(
           balance.toString(),
           amount,
@@ -133,28 +133,28 @@ contract("Ribon", accounts => {
     });
   });
 
-  describe("#distribute when distribute correctly ", async () => {
+  describe("#donate when donate correctly ", async () => {
     const amount = web3.utils.toWei("1", "ether");
     
     before(async function () {
-      await ribon.distribute(accounts[1], amount)
+      await ribon.donate(accounts[1], amount)
     });
 
-    it("should remove amount to integration balance", async () => {
-      const balance = await ribon.getIntegrationBalance(accounts[0]);
-      assert.equal(
-          balance.toString(),
-          0,
-          "Balance wasn't 0 ether"
-        )
-    });
-
-    it("should add amount to user balance", async () => {
-      const balance = await ribon.getUserBalance(accounts[1]);
+    it("should send ribon governance tokens to ngo", async () => {
+      const balance = await ribonGov.balanceOf(accounts[1]);
       assert.equal(
           balance.toString(),
           amount,
           "Balance wasn't 1 ether"
+        )
+    });
+
+    it("should burn ribon tokens", async () => {
+      const balance = await ribon.totalSupply();
+      assert.equal(
+          balance.toString(),
+          0,
+          "Total supply wasn't 0"
         )
     });
   });
