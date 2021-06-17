@@ -35,8 +35,8 @@ contract Ribon {
     }
 
     function deposit(uint256 _amount) public {
-        donationToken.safeTransferFrom(msg.sender, address(this), _amount);
         donationPoolBalance = donationPoolBalance + _amount;
+        donationToken.safeTransferFrom(msg.sender, address(this), _amount);
     }
 
     function allowIntegrationDistribute(address _integration, uint256 _amount)
