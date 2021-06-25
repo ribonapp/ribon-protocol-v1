@@ -1,14 +1,14 @@
 const console = require("console");
 
 const Ribon = artifacts.require("Ribon");
-const RibonGov = artifacts.require("RibonGov");
+const DonationToken = artifacts.require("DonationToken");
 
 contract("Ribon", accounts => {
-  let ribonGov;
+  let donationToken;
   let ribon;
 
   before(async function () {
-    ribonGov = await RibonGov.deployed();
+    donationToken = await DonationToken.deployed();
     ribon = await Ribon.deployed();
   })
 
@@ -16,7 +16,7 @@ contract("Ribon", accounts => {
     const amount = web3.utils.toWei("1", "ether");
     
     before(async function () {
-      await ribonGov.approve(ribon.address, amount)
+      await donationToken.approve(ribon.address, amount)
       await ribon.deposit(amount)
     });
       
@@ -56,41 +56,18 @@ contract("Ribon", accounts => {
     });
   });
 
-  describe("#allowUserDonate when allow correctly ", async () => {
+  describe("#donationThroughIntegration when donate correctly ", async () => {
     const amount = web3.utils.toWei("1", "ether");
+    const nonProfit = accounts[3];
+    const integration = accounts[0];
+    const user = accounts[4];
     
     before(async function () {
-      await ribon.allowUserDonate(accounts[0], amount)
-    });
-      
-    it("should add the amount on user balance", async () => {
-      const userBalance = await ribon.getUserBalance(accounts[0]);
-      assert.equal(
-        userBalance.toString(),
-          amount,
-          "Balance wasn't 1 ether"
-        )
-    });
-
-    it("should remove the amount on integration balance", async () => {
-      const integrationBalance = await ribon.getIntegrationBalance(accounts[0]);
-      assert.equal(
-          integrationBalance.toString(),
-          0,
-          "Balance wasn't 0 ether"
-        )
-    });
-  });
-
-  describe("#donate when donate correctly ", async () => {
-    const amount = web3.utils.toWei("1", "ether");
-    
-    before(async function () {
-      await ribon.donate(accounts[3], amount)
+      await ribon.donationThroughIntegration(nonProfit, user, amount)
     });
       
     it("should add the amount on non profit balance", async () => {
-      const userBalance = await ribonGov.balanceOf(accounts[3]);
+      const userBalance = await donationToken.balanceOf(nonProfit);
       assert.equal(
         userBalance.toString(),
           amount,
@@ -99,10 +76,19 @@ contract("Ribon", accounts => {
     });
 
     it("should remove the amount on user balance", async () => {
-      const userBalance = await ribon.getUserBalance(accounts[0]);
+      const userBalance = await ribon.getUserBalance(integration);
       assert.equal(
           userBalance.toString(),
           0,
+          "Balance wasn't 0 ether"
+        )
+    });
+
+    it("should add the amount on user impact", async () => {
+      const userBalance = await ribon.getUserImpactByNonProfit(user, nonProfit);
+      assert.equal(
+          userBalance.toString(),
+          amount,
           "Balance wasn't 0 ether"
         )
     });

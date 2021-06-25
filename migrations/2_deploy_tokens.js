@@ -1,11 +1,11 @@
-const RibonGov = artifacts.require("RibonGov")
+const DonationToken = artifacts.require("DonationToken")
 const Ribon = artifacts.require("Ribon")
 
 module.exports = async function (deployer, network, accounts) {
-  // Deploy RibonGov
-  await deployer.deploy(RibonGov)
-  const ribonGov = await RibonGov.deployed()
+  // Deploy DonationToken
+  await deployer.deploy(DonationToken)
+  const donationToken = await DonationToken.deployed()
 
-  await deployer.deploy(Ribon, ribonGov.address)
-  const ribon = await RibonGov.deployed()
+  await deployer.deploy(Ribon, donationToken.address)
+  const ribon = await Ribon.deployed()
 }
